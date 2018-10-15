@@ -129,7 +129,7 @@ def gmm_pdf(X, centroids, ccov, mc, individual=False):
         pdf = None
         for i in range(len(centroids)):
             pdfadd = mulnormpdf(X, centroids[i], ccov[i]) * mc[i]
-            if pdf==None:
+            if pdf is None:
                 pdf = pdfadd
             else:
                 pdf = pdf + pdfadd
@@ -195,9 +195,17 @@ def sample_gaussian_mixture(centroids, ccov, mc = None, samples = 1):
     for k in range(K):
         idx = (sel_idx >= cs_mc[k]) * (sel_idx < cs_mc[k+1])
         ksamples = np.sum(idx)
-        drawn_samples = np.random.multivariate_normal(\
-            cc[k], ccov[k], ksamples)
+        drawn_samples = np.random.multivariate_normal(cc[k], ccov[k], ksamples)
+
+        # if drawn_samples != []:
         res[idx,:] = drawn_samples
+
+        # print "Buga buga!!!!", drawn_samples
+        # print "Info: "
+        # print "mu", cc[k]
+        # print "cov", ccov[k]
+        # print "pk", mc[k]
+        # raw_input("wait")
     return res
 
 def gauss_ellipse_2d(centroid, ccov, sdwidth=1, points=100):
@@ -540,7 +548,7 @@ def cond_dist(Y, centroids, ccov, mc):
         conditional distribution.
     """
     not_set_idx = np.nonzero(np.isnan(Y))[0]
-    set_idx = np.nonzero(np.logical_xor(True,np.isnan(Y)))[0]
+    set_idx = np.nonzero(np.logical_xor(True,np.isnan(Y)) )[0]#np.nonzero(True - np.isnan(Y))[0]
     new_idx = np.concatenate((not_set_idx, set_idx))
     y = Y[set_idx]
     # New centroids and covar matrices
@@ -564,10 +572,22 @@ def cond_dist(Y, centroids, ccov, mc):
         new_cen.append(cen)
         new_ccovs.append(cov)
         fk.append(mulnormpdf(Y[set_idx], uy, B)) # Used for normalizing the mc
+        # if mulnormpdf(Y[set_idx], uy, B) == 0.0:
+        #     print "Warning here!!"
+        #     print Y[set_idx], uy, B
+        #     print "why? ", mulnormpdf(Y[set_idx], uy, B)
     # Normalize the mixing coef: p(X|Y) = p(Y,X) / p(Y) using the marginal dist.
     fk = np.array(fk).flatten()
     new_mc = (mc*fk)
-    new_mc = new_mc / np.sum(new_mc)
+    # print "fk: ", fk
+    # print "mc: ", mc
+    # print "mc*fk: ", new_mc
+    # print "sum(new_mc): ", np.sum(new_mc)
+
+    # if np.sum(new_mc) == 0.0:
+    #     raw_input('wait')
+
+    new_mc = (new_mc + 1e-11) / (np.sum(new_mc) + len(new_mc)*1e-11)
     return (new_cen, new_ccovs, new_mc)
 
 def marg_dist(X_idx, centroids, ccov, mc):
