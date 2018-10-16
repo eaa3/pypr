@@ -586,8 +586,10 @@ def cond_dist(Y, centroids, ccov, mc):
 
     # if np.sum(new_mc) == 0.0:
     #     raw_input('wait')
-
-    new_mc = (new_mc + 1e-11) / (np.sum(new_mc) + len(new_mc)*1e-11)
+    if not np.any(new_mc):
+        new_mc = None
+    else:
+        new_mc = new_mc / np.sum(new_mc)
     return (new_cen, new_ccovs, new_mc)
 
 def marg_dist(X_idx, centroids, ccov, mc):
